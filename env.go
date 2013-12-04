@@ -1,4 +1,4 @@
-package martini
+package flog 
 
 import (
 	"os"
@@ -10,11 +10,11 @@ const (
 	Test string = "test"
 )
 
-// Env is the environment that Martini is executing in. The MARTINI_ENV is read on initialization to set this variable.
+// Env is the environment that Martini is executing in. The FLOG_ENV is read on initialization to set this variable.
 var Env string = Dev
 
 func init() {
-	e := os.Getenv("MARTINI_ENV")
+	e := os.Getenv("FLOG_ENV")
 	if len(e) > 0 {
 		Env = e
 	}

@@ -1,4 +1,4 @@
-package martini
+package flog 
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-// Params is a map of name/value pairs for named routes. An instance of martini.Params is available to be injected into any route handler.
+// Params is a map of name/value pairs for named routes. An instance of flag.Params is available to be injected into any route handler.
 type Params map[string]string
 
 // Router is Martini's de-facto routing interface. Supports HTTP verbs, stacked handlers, and dependency injection.
@@ -108,7 +108,7 @@ func (r *router) addRoute(method string, pattern string, handlers []Handler) *ro
 	return route
 }
 
-// Route is an interface representing a Route in Martini's routing layer.
+// Route is an interface representing a Route in Flag's routing layer.
 type Route interface {
 	// URLWith returns a rendering of the Route's url with the given string params.
 	URLWith([]string) string
@@ -191,7 +191,7 @@ func (r *route) URLWith(args []string) string {
 	return r.pattern
 }
 
-// Routes is a helper service for Martini's routing layer.
+// Routes is a helper service for Flag's routing layer.
 type Routes interface {
 	// URLFor returns a rendered URL for the given route. Optional params can be passed to fulfill named parameters in the route.
 	URLFor(route Route, params ...interface{}) string
