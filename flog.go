@@ -8,7 +8,10 @@ import (
 	"reflect"
 )
 
-// App represents the top level web application. inject.Injector methods can be invoked to map services on a global level.
+const VERSION = "0.0.1"
+
+// App represents the top level web application.
+// inject.Injector methods can be invoked to map services on a global level.
 type App struct {
 	inject.Injector
 	handlers []Handler
@@ -16,18 +19,38 @@ type App struct {
 	logger   *log.Logger
 }
 
-// New creates a bare bones Flog instance. Use this method if you want to have full control over the middleware that is used.
+// New creates a bare bones Flog instance.
+// Use this method if you want to have full control over the middleware that is used.
 func New() *App {
 	a := &App{inject.New(), []Handler{}, func() {}, log.New(os.Stdout, "[flog app] ", 0)}
 	a.Map(a.logger)
 	return a
 }
 
-// Use adds a middleware Handler to the stack. Will panic if the handler is not a callable func. Middleware Handlers are invoked in the order that they are added.
+// Handler can be any callable function.
+type Handler interface{}
+
+func validateHandler(handler Handler) {
+	if reflect.TypeOf(handler).Kind() != reflect.Func {
+		panic("app handler must be a callable func")
+	}
+}
+
+// Use adds a middleware Service to the stack.
+// Will panic if the service is not a callable func.
+// Middleware services are invoked in the order that they are added.
 func (a *App) Use(handler Handler) {
 	validateHandler(handler)
-
 	a.handlers = append(a.handlers, handler)
+}
+
+// Handlers sets the entire middleware stack with the given Handlers. This will clear any current middleware handlers.
+// Will panic if any of the handlers is not a callable function
+func (a *App) Handlers(handlers ...Handler) {
+	a.handlers = make([]Handler, 0)
+	for _, handler := range handlers {
+		a.Use(handler)
+	}
 }
 
 // ServeHTTP is the HTTP Entry point for a Flog instance. Useful if you want to control your own HTTP server.
@@ -35,7 +58,8 @@ func (a *App) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	a.createContext(res, req).run()
 }
 
-// Action sets the handler that will be called after all the middleware has been invoked. This is set to flog.Router in a flog.Classic().
+// Action sets the handler that will be called after all the middleware has been invoked.
+// This is set to flog.Router in a flog.Classic().
 func (a *App) Action(handler Handler) {
 	validateHandler(handler)
 	a.action = handler
@@ -52,13 +76,19 @@ func (a *App) Run() {
 	a.logger.Fatalln(http.ListenAndServe(":"+port, a))
 }
 
-// Handlers sets the entire middleware stack with the given Handlers. This will clear any current middleware handlers.
-// Will panic if any of the handlers is not a callable function
-func (a *App) Handlers(handlers ...Handler) {
-	a.handlers = make([]Handler, 0)
-	for _, handler := range handlers {
-		a.Use(handler)
-	}
+// represents an App with reasonable defaults. Embeds the router functions for convenience.
+type FlogApplication struct {
+	*App
+	Router
+}
+
+// Flog with some basic default middleware
+func Flog() *FlogApplication {
+	r := NewRouter()
+	fa := New()
+    fa.Handlers(Logger(), Recovery(), Static("static"), Renderer("templates")) 
+	fa.Action(r.Handle)
+	return &FlogApplication{fa, r}
 }
 
 func (a *App) createContext(res http.ResponseWriter, req *http.Request) *context {
@@ -68,31 +98,6 @@ func (a *App) createContext(res http.ResponseWriter, req *http.Request) *context
 	c.MapTo(c.rw, (*http.ResponseWriter)(nil))
 	c.Map(req)
 	return c
-}
-
-// represents an App with reasonable defaults. Embeds the router functions for convenience.
-type FlogApplication struct {
-	*App
-	Router
-}
-
-// Classic creates a classic Flog with some basic default middleware - flog.Logger, flog.Recovery, flog.Static, flog.Renderer.
-func Flog() *FlogApplication {
-	r := NewRouter()
-	fa := New()
-    fa.Handlers(Logger(), Recovery(), Static("static"), Renderer("templates")) 
-	fa.Action(r.Handle)
-	return &FlogApplication{fa, r}
-}
-
-// Handler can be any callable function. Flog attempts to inject services into the handler's argument list.
-// Flog will panic if an argument could not be fullfilled via dependency injection.
-type Handler interface{}
-
-func validateHandler(handler Handler) {
-	if reflect.TypeOf(handler).Kind() != reflect.Func {
-		panic("app handler must be a callable func")
-	}
 }
 
 // Context represents a request context. Services can be mapped on the request level from this interface.
