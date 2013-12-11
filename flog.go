@@ -59,7 +59,6 @@ func (a *App) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 }
 
 // Action sets the handler that will be called after all the middleware has been invoked.
-// This is set to flog.Router in a flog.Classic().
 func (a *App) Action(handler Handler) {
 	validateHandler(handler)
 	a.action = handler
@@ -85,10 +84,10 @@ type FlogApplication struct {
 // Flog with some basic default middleware
 func Flog() *FlogApplication {
 	r := NewRouter()
-	fa := New()
-    fa.Handlers(Logger(), Recovery(), Static("static"), Renderer("templates")) 
-	fa.Action(r.Handle)
-	return &FlogApplication{fa, r}
+	a := New()
+    a.Handlers(Logger(), Recovery(), Static("static"), Renderer("templates")) 
+	a.Action(r.Handle)
+	return &FlogApplication{a, r}
 }
 
 func (a *App) createContext(res http.ResponseWriter, req *http.Request) *context {

@@ -1,5 +1,5 @@
 package flog 
-
+/*
 import (
 	"net/http"
 	"net/http/httptest"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-/*
+
 type Greeting struct {
 	One string `json:"one"`
 	Two string `json:"two"`
@@ -84,7 +84,7 @@ func Test_Render_Error500(t *testing.T) {
 	expect(t, res.Code, 500)
 }
 
-/* Test Helpers */
+/Test Helpers/
 func expect(t *testing.T, a interface{}, b interface{}) {
 	if a != b {
 		t.Errorf("Expected %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
@@ -96,5 +96,4 @@ func refute(t *testing.T, a interface{}, b interface{}) {
 		t.Errorf("Did not expect %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
 	}
 }
-
 */
