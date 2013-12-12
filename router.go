@@ -26,6 +26,8 @@ type Router interface {
 	Delete(string, string, ...Handler) Route
 	// Options adds a route for a HTTP OPTIONS request to the specified matching pattern.
 	Options(string, string, ...Handler) Route
+    // Head adds a route for a HTTP HEAD request to the specified matching pattern.
+    Head(string, string, ...Handler) Route
 	// Any adds a route for any HTTP method request to the specified matching pattern.
 	Any(string, string, ...Handler) Route
 
@@ -34,6 +36,8 @@ type Router interface {
 
 	// Handle is the entry point for routing. This is used as a martini.Handler
 	Handle(http.ResponseWriter, *http.Request, Context)
+ 
+    UrlFor(string, ...interface{}) string
 }
 
 type router struct {
@@ -71,6 +75,10 @@ func (r *router) Options(endpoint string, pattern string, h ...Handler) Route {
 	return r.addRoute(endpoint, "OPTIONS", pattern, h)
 }
 
+func (r *router) Head(endpoint string, pattern string, h ...Handler) Route {
+    return r.addRoute(endpoint, "HEAD", pattern, h)
+}
+
 func (r *router) Any(endpoint string, pattern string, h ...Handler) Route {
 	return r.addRoute(endpoint, "*", pattern, h)
 }
@@ -104,7 +112,11 @@ func (r *router) NotFound(handler ...Handler) {
 func (r *router) addRoute(endpoint string, method string, pattern string, handlers []Handler) *route {
 	route := newRoute(endpoint, method, pattern, handlers)
 	route.Validate()
-	//r.routes = append(r.routes, route)
     r.routes[endpoint] = route
 	return route
+}
+
+func (r *router) UrlFor(endpoint string, params ...interface{}) string {
+    rte := r.routes[endpoint]
+    return rte.urlFor(params)
 }

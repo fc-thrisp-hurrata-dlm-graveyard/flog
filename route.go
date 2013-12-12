@@ -2,17 +2,18 @@ package flog
 
 import (
 	"fmt"
-	"github.com/codegangsta/inject"
+	//"github.com/codegangsta/inject"
+    "../inject"
 	"net/http"
 	"reflect"
 	"regexp"
-	//"strconv"
+	"strconv"
 )
 
 // Route is an interface representing a Route in Flog's routing layer.
 type Route interface {
 	// URLWith returns a rendering of the Route's url with the given string params.
-	URLWith([]string) string
+	urlFor(params ...interface{}) string
 }
 
 type route struct {
@@ -71,9 +72,11 @@ func (r *route) Handle(c Context, res http.ResponseWriter) {
 	ctx.run()
 }
 
-// URLWith returns the url pattern replacing the parameters for its values
-func (r *route) URLWith(args []string) string {
-	if len(args) > 0 {
+
+// URLFor returns the url for the given route name.
+func (r *route) urlFor(params ...interface{}) string {
+    args := urlArgs(params)
+    if len(args) > 0 {
 		reg := regexp.MustCompile(`:[^/#?()\.\\]+`)
 		argCount := len(args)
 		i := 0
@@ -93,18 +96,9 @@ func (r *route) URLWith(args []string) string {
 	return r.pattern
 }
 
-/*
-// Routes is a helper service for Flog's routing layer.
-type Routes interface {
-	// URLFor returns a rendered URL for the given route. Optional params can be passed to fulfill named parameters in the route.
-	URLFor(route Route, params ...interface{}) string
-}
-
-type routes struct{}
-
-// URLFor returns the url for the given route name.
-func (r routes) URLFor(route Route, params ...interface{}) string {
-	var args []string
+// args for URLFor
+func urlArgs(params ...interface{}) []string {
+    var args []string
 	for _, param := range params {
 		switch v := param.(type) {
 		case int:
@@ -117,10 +111,8 @@ func (r routes) URLFor(route Route, params ...interface{}) string {
 			}
 		}
 	}
-
-	return route.URLWith(args)
+    return args
 }
-*/
 
 type routeContext struct {
 	Context

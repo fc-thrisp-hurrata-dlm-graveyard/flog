@@ -1,7 +1,9 @@
 package flog
 
 import (
-	"github.com/codegangsta/inject"
+    "fmt"
+	//"github.com/codegangsta/inject"
+    "../inject"
 	"log"
 	"net/http"
 	"os"
@@ -13,16 +15,19 @@ const VERSION = "0.0.1"
 // App represents the top level web application.
 // inject.Injector methods can be invoked to map services on a global level.
 type App struct {
-	inject.Injector
+    name     string
+	inject.Injector 
 	handlers []Handler
 	action   Handler
 	logger   *log.Logger
+    apps     map[string]*App
 }
 
 // New creates a bare bones Flog instance.
 // Use this method if you want to have full control over the middleware that is used.
-func New() *App {
-	a := &App{inject.New(), []Handler{}, func() {}, log.New(os.Stdout, "[flog app] ", 0)}
+func New(name string) *App {
+    a := &App{name, inject.New(), []Handler{}, func() {}, log.New(os.Stdout, fmt.Sprintf("[flog: %s] ", name), 0), make(map[string]*App)}
+    a.apps[name] = a
 	a.Map(a.logger)
 	return a
 }
@@ -75,19 +80,19 @@ func (a *App) Run() {
 	a.logger.Fatalln(http.ListenAndServe(":"+port, a))
 }
 
-// represents an App with reasonable defaults. Embeds the router functions for convenience.
+// Embeds the router functions for convenience.
 type FlogApplication struct {
 	*App
 	Router
 }
 
-// Flog with some basic default middleware
-func Flog() *FlogApplication {
+// Represents an App with reasonable defaults
+func Flog(name string) *FlogApplication {
 	r := NewRouter()
-	a := New()
-    a.Handlers(Logger(), Recovery(), Static("static"), Renderer("templates")) 
-	a.Action(r.Handle)
-	return &FlogApplication{a, r}
+    a := New(name)
+    a.Handlers(Logger(), Recovery(), Static("static"), Renderer("templates"))
+    a.Action(r.Handle)
+    return &FlogApplication{a, r}
 }
 
 func (a *App) createContext(res http.ResponseWriter, req *http.Request) *context {
